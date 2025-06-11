@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starship Battle Versus - Enhanced</title>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/game-ui.css">
+</head>
+<body>
+    <!-- Panneau de connexion -->
+    <div id="connectionPanel">
+        <h2>🚖 Starship Battle Online</h2>
+        <div id="myPeerID">
+            Votre pseudo: <span id="peerIdSpan">Connexion...</span>
+            <button id="copyIdBtn">📋 Copier</button>
+        </div>
+        <div>
+            <h3>Créer une partie</h3>
+            <button id="hostGame" disabled>Héberger une partie</button>
+        </div>
+        <div>
+            <h3>Rejoindre une partie</h3>
+            <input type="text" id="joinGameInput" placeholder="Entrez le pseudo de votre adversaire">
+            <br>
+            <button id="joinGame">Rejoindre</button>
+        </div>
+        <div id="connectionStatus">En attente de connexion...</div>
+    </div>
+
+    <!-- Interface de jeu -->
+    <div id="scoreBoard" style="display: none;">
+        <div class="team-score team1">
+            <span id="team1Name">Chargement...</span> - Partie gagnées: <span id="team1Score">0</span>
+            <div id="team1Lives" class="lives-container"></div>
+        </div>
+        <div class="team-score team2">
+            <span id="team2Name">Chargement...</span> - Partie gagnées: <span id="team2Score">0</span>
+            <div id="team2Lives" class="lives-container"></div>
+        </div>
+    </div>
+
+    <div id="team1Points" class="point-counter">
+        <span>POINTS ROUGES: <span id="p1RedPoints">0</span> / 25</span>
+    </div>
+    <div id="team2Points" class="point-counter" style="display: none;">
+        <span>POINTS ROUGES: <span id="p2RedPoints">0</span> / 25</span>
+    </div>
+
+    <div id="networkStatus" style="display: none;">
+        <span id="statusText">Connecté</span>
+    </div>
+
+    <div id="gameOverMessage"></div>
+
+    <div class="divider" style="display: none;"></div>
+    <div id="controlInfo" style="display: none;">
+        Contrôles: Souris (mouvement + clic gauche), WASD + G (J1) / Flèches + Espace (J2)
+    </div>
+    <canvas id="gameCanvas" style="display: none;"></canvas>
+    <button id="resetButton">Réinitialiser</button>
+
+    <!-- Chargement des scripts dans le bon ordre -->
+    <!-- Configuration -->
+    <script src="js/config/constants.js"></script>
+    <script src="js/config/settings.js"></script>
+
+    <!-- Utils -->
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/utils/sound-manager.js"></script>
+    <script src="js/utils/image-loader.js"></script>
+
+    <!-- State -->
+    <script src="js/state/game-state.js"></script>
+
+    <!-- Entities -->
+    <script src="js/entities/bullet.js"></script>
+    <script src="js/entities/player.js"></script>
+    <script src="js/entities/powerup.js"></script>
+    <script src="js/entities/redpoint.js"></script>
+    <script src="js/entities/assistant.js"></script>
+    <script src="js/entities/shield.js"></script>
+    <script src="js/entities/thunder.js"></script>
+
+    <!-- Systems -->
+    <script src="js/systems/input.js"></script>
+    <script src="js/systems/collision.js"></script>
+    <script src="js/systems/particles.js"></script>
+    <script src="js/systems/laser-traits.js"></script>
+    <script src="js/systems/renderer.js"></script>
+
+    <!-- Network -->
+    <script src="js/network/peer-manager.js"></script>
+    <script src="js/network/connection.js"></script>
+    <script src="js/network/sync.js"></script>
+
+    <!-- UI -->
+    <script src="js/ui/menu.js"></script>
+    <script src="js/ui/hud.js"></script>
+    <script src="js/ui/gameover.js"></script>
+
+    <!-- Game -->
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

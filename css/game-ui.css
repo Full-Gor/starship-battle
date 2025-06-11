@@ -1,0 +1,88 @@
+/* game-ui.css - Interface de jeu */
+
+#scoreBoard {
+    position: absolute;
+    top: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    color: white;
+    z-index: 20;
+}
+
+.team-score {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+.lives-container {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.life-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    background: red;
+    border-radius: 50%;
+}
+
+.point-counter {
+    position: absolute;
+    font-size: 20px;
+    font-weight: bold;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 2px solid;
+}
+
+#team1Points {
+    top: 60px;
+    right: 15px;
+    color: #04fbac;
+    border-color: #04fbac;
+    display: flex;
+}
+
+#team2Points {
+    bottom: 60px;
+    right: 15px;
+    color: #FF7F50;
+    border-color: #FF7F50;
+}
+
+#gameOverMessage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 20px 40px;
+    border-radius: 10px;
+    font-size: 24px;
+    text-align: center;
+    z-index: 100;
+    display: none;
+}
+
+#networkStatus {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #04fbac;
+    font-size: 14px;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+}
