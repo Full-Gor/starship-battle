@@ -1,26 +1,54 @@
-const starshipImg = new Image();
-starshipImg.src = '../img/starship7.jpg';
-const starship2Img = new Image();
-starship2Img.src = '../img/starship6.jpg';
+const gameState = {
+      players: [
+          {
+              x: 0,
+              y: 0,
+              width: 50,
+              height: 50,
+              lives: 10,
+              bullets: [],
+              powerUpLevel: 0,
+              active: true,
+              shield: false,
+              shieldTimeout: null,
+              points: 0,
+              impacts: 0,
+              redPointsCollected: 0,
+              assistantShips: [],
+              gamesWon: 0,
+              lastShootTime: 0
+          },
+          {
+              x: 0,
+              y: 0,
+              width: 50,
+              height: 50,
+              lives: 10,
+              bullets: [],
+              powerUpLevel: 0,
+              active: true,
+              shield: false,
+              shieldTimeout: null,
+              points: 0,
+              impacts: 0,
+              redPointsCollected: 0,
+              assistantShips: [],
+              gamesWon: 0,
+              lastShootTime: 0
+          }
+      ],
+      powerUps: [],
+      redPoints: [],
+      laserTraits: [],
+      paused: false,
+      gameOver: false,
+      winner: null,
+      lastPowerUpGeneration: 0,
+      lastTraitGeneration: 0
+  };
 
-const powerUpImgs = [];
-for (let i = 0; i < 3; i++) {
-    powerUpImgs[i] = new Image();
-    powerUpImgs[i].src = '../img/powerUp' + (i === 0 ? '' : i) + '.jpg';
-}
-
-const livesImg = new Image();
-livesImg.src = '../img/lives.jpg';
-
-const thunderImgs = [];
-for (let i = 0; i < 3; i++) {
-    thunderImgs[i] = new Image();
-    thunderImgs[i].src = '../img/thunderImgs' + (i + 1) + '.jpg';
-}
-
-const assistantShipImgs = [];
-for (let i = 1; i <= 6; i++) {
-    const img = new Image();
-    img.src = `../img/starship${i}.jpg`;
-    assistantShipImgs.push(img);
-}
+  const shieldParticles = {
+      particles: [],
+      colors: ['#04fbac', '#00ffff', '#ff4444', '#0080ff'],
+      particleCount: 20
+  };

@@ -12,11 +12,11 @@ for (let i = 0; i < 3; i++) {
 const livesImg = new Image();
 livesImg.src = '../assets/img/lives.jpg';
 
-const thunderImgs = [];
-for (let i = 0; i < 3; i++) {
-    thunderImgs[i] = new Image();
-    thunderImgs[i].src = '../assets/img/thunderImgs' + (i + 1) + '.jpg';
-}
+// const thunderImgs = [];
+// for (let i = 0; i < 3; i++) {
+//     thunderImgs[i] = new Image();
+//     thunderImgs[i].src = '../assets/img/thunderImgs' + (i + 1) + '.jpg';
+// }
 
 const assistantShipImgs = [];
 for (let i = 1; i <= 6; i++) {
