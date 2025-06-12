@@ -1,86 +1,125 @@
-// thunder.js - Effet thunder
+function activateThunder(player) {
+    if (!player) return;
 
-const Thunder = {
-    activate: function(player) {
-        if (player.thunderActive) {
-            player.thunderCount = Math.min(player.thunderCount + 1, 3);
-        } else {
-            player.thunderActive = true;
-            player.thunderCount = 1;
-            player.thunderStartTime = Date.now();
-        }
-        
-        SoundManager.play('king');
-        
-        const playerIndex = GameState.players.indexOf(player);
-        if (playerIndex === GameState.myPlayerIndex) {
-            NetworkSync.sendThunderActivated(playerIndex);
-        }
-    },
-    
-    update: function(player) {
+    if (player.thunderActive) {
+        player.thunderCount = Math.min(player.thunderCount + 1, 3);
+    } else {
+        player.thunderActive = true;
+        player.thunderCount = 1;
+        player.thunderStartTime = Date.now();
+    }
+
+    playSound(soundEffects.king);
+    console.log('Thunder activated, count:', player.thunderCount);
+}
+
+function updateThunder() {
+    gameState.players.forEach(player => {
         if (!player.thunderActive) return;
-        
+
         const elapsedTime = Date.now() - player.thunderStartTime;
-        if (elapsedTime > CONSTANTS.THUNDER_DURATION) {
+        if (elapsedTime > 8000) {
             player.thunderActive = false;
             player.thunderCount = 0;
         }
-    },
-    
-    updateAll: function() {
-        GameState.players.forEach(player => {
-            this.update(player);
-        });
-    },
-    
-    draw: function(player, playerIndex) {
+    });
+}
+
+function drawThunder() {
+    gameState.players.forEach((player, index) => {
         if (!player.thunderActive) return;
-        
-        const ctx = GameState.ctx;
-        const thunderFrame = Math.floor((Date.now() - player.thunderStartTime) / 1000) % 3;
-        const thunderDirections = [
-            { angle: 90 },
-            { angle: 135 },
-            { angle: 45 }
-        ];
+
+        const elapsed = Date.now() - player.thunderStartTime;
+        const thunderFrame = Math.floor(elapsed / 200) % 3;
         
         for (let i = 0; i < player.thunderCount; i++) {
-            const direction = thunderDirections[i % thunderDirections.length];
+            const angle = (i * 120) - 60;
+            
             ctx.save();
-            
-            const angleRad = (direction.angle - 90) * Math.PI / 180;
             ctx.translate(player.x, player.y);
-            ctx.rotate(angleRad);
+            ctx.rotate((angle * Math.PI) / 180);
             
-            const img = ImageLoader.get(`thunder${thunderFrame + 1}`);
-            if (img && img.complete) {
+            if (thunderImgs[thunderFrame] && thunderImgs[thunderFrame].complete) {
+                const thunderHeight = 300;
                 ctx.drawImage(
-                    img,
-                    -20,
-                    playerIndex === 0 ? -400 : 0,
-                    40,
-                    400
+                    thunderImgs[thunderFrame],
+                    -15,
+                    index === 0 ? -thunderHeight : 0,
+                    30,
+                    thunderHeight
                 );
             } else {
-                // Fallback avec effet électrique
-                ctx.strokeStyle = playerIndex === 0 ? CONSTANTS.TEAM1_COLOR : CONSTANTS.TEAM2_COLOR;
-                ctx.lineWidth = 3;
-                ctx.shadowColor = ctx.strokeStyle;
-                ctx.shadowBlur = 10;
-                
-                // Zigzag électrique
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                for (let j = 0; j < 10; j++) {
-                    const y = j * 40;
-                    const x = (Math.random() - 0.5) * 20;
-                    ctx.lineTo(x, playerIndex === 0 ? -y : y);
-                }
-                ctx.stroke();
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(-5, index === 0 ? -200 : 0, 10, 200);
             }
-            
+            ctx.restore();
+        });
+    });
+}function activateThunder(player) {
+    if (!player) return;
+
+    if (player.thunderActive) {
+        player.thunderCount = Math.min(player.thunderCount + 1, 3);
+    } else {
+        player.thunderActive = true;
+        player.thunderCount = 1;
+        player.thunderStartTime = Date.now();
+    }
+
+    playSound(soundEffects.king);
+    console.log('Thunder activated, count:', player.thunderCount);
+
+    // Synchronisation réseau si joueur local
+    const playerIndex = gameState.players.indexOf(player);
+    if (playerIndex === myPlayerIndex) {
+        sendMessage({
+            type: 'thunderActivated',
+            playerIndex: playerIndex
+        });
+    }
+}
+
+function updateThunder() {
+    gameState.players.forEach(player => {
+        if (!player.thunderActive) return;
+
+        const elapsedTime = Date.now() - player.thunderStartTime;
+        if (elapsedTime > 8000) {
+            player.thunderActive = false;
+            player.thunderCount = 0;
+        }
+    });
+}
+
+function drawThunder() {
+    gameState.players.forEach((player, index) => {
+        if (!player.thunderActive) return;
+
+        const elapsed = Date.now() - player.thunderStartTime;
+        const thunderFrame = Math.floor(elapsed / 200) % 3;
+
+        for (let i = 0; i < player.thunderCount; i++) {
+            const angle = (i * 120) - 60;
+
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate((angle * Math.PI) / 180);
+
+            if (thunderImgs[thunderFrame] && thunderImgs[thunderFrame].complete) {
+                const thunderHeight = 300;
+                ctx.drawImage(
+                    thunderImgs[thunderFrame],
+                    -15,
+                    index === 0 ? -thunderHeight : 0,
+                    30,
+                    thunderHeight
+                );
+            } else {
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(-5, index === 0 ? -200 : 0, 10, 200);
+            }
+
             ctx.restore();
         }
-    }
-};
+    });
+}

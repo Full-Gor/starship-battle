@@ -1,87 +1,95 @@
-// redpoint.js - Points rouges
+function generateRedPoints() {
+    if (!isHost || !gameStarted) return;
 
-const RedPoint = {
-    create: function(x = null, y = null, explosive = false) {
-        const point = {
-            x: x || Math.random() * GameState.canvas.width,
-            y: y || Math.random() * GameState.canvas.height,
-            vx: explosive ? (Math.random() - 0.5) * 8 : (Math.random() - 0.5) * 2,
-            vy: explosive ? (Math.random() - 0.5) * 8 : (Math.random() - 0.5) * 2,
-            id: Date.now() + Math.random()
+    const count = 5 + Math.floor(Math.random() * 8);
+    for (let i = 0; i < count; i++) {
+        const redPoint = {
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            id: Date.now() + Math.random() + i,
+            size: 3 + Math.random() * 2
         };
-        
-        GameState.redPoints.push(point);
-        
-        if (GameState.isHost && !explosive) {
-            NetworkSync.sendMessage({
-                type: 'redPointGenerated',
-                redPoint: point
-            });
-        }
-        
-        return point;
-    },
-    
-    update: function(point, deltaTime) {
-        const normalizedDelta = deltaTime / 16.67;
-        
-        // Mouvement avec friction
-        point.x += point.vx * normalizedDelta;
-        point.y += point.vy * normalizedDelta;
-        
-        if (point.vx) point.vx *= 0.98;
-        if (point.vy) point.vy *= 0.98;
-        
-        // Attraction vers les joueurs
-        GameState.players.forEach((player) => {
+        gameState.redPoints.push(redPoint);
+        sendMessage({ type: 'redPointGenerated', redPoint });
+    }
+}
+
+function updateRedPoints() {
+    gameState.redPoints = gameState.redPoints.filter(point => {
+        point.x += point.vx || 0;
+        point.y += point.vy || 0;
+
+        if (point.vx) point.vx *= 0.99;
+        if (point.vy) point.vy *= 0.99;
+
+        gameState.players.forEach((player, index) => {
             if (!player.active) return;
-            
+
             const dx = player.x - point.x;
             const dy = player.y - point.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance < 100 && distance > 0) {
-                const force = (100 - distance) / 100 * 3 * normalizedDelta;
-                point.x += (dx / distance) * force;
-                point.y += (dy / distance) * force;
+
+            if (distance < 80) {
+                const force = (80 - distance) / 80 * 2;
+                point.vx += (dx / distance) * force * 0.1;
+                point.vy += (dy / distance) * force * 0.1;
+
+                if (distance < 25) {
+                    if (index === myPlayerIndex) {
+                        player.redPointsCollected++;
+                        updateRedPointsDisplay(index);
+
+                        sendMessage({
+                            type: 'redPointCollected',
+                            playerIndex: index,
+                            pointId: point.id
+                        });
+
+                        if (player.redPointsCollected >= 25) {
+                            activateShield(player, 4000);
+                            player.redPointsCollected = 0;
+                            updateRedPointsDisplay(index);
+
+                            sendMessage({
+                                type: 'shieldActivated',
+                                playerIndex: index
+                            });
+                        }
+
+                        playSound(soundEffects.coin);
+                    }
+                    return false;
+                }
             }
         });
-        
-        // Vérifier si toujours dans l'écran
-        return point.x > 0 && point.x < GameState.canvas.width &&
-               point.y > 0 && point.y < GameState.canvas.height;
-    },
+
+        return point.x > -10 && point.x < canvas.width + 10 &&
+               point.y > -10 && point.y < canvas.height + 10;
+    });
+}
+
+function updateRedPointsDisplay(playerIndex) {
+    const element = document.getElementById(`p${playerIndex + 1}RedPoints`);
+    if (element) {
+        element.textContent = gameState.players[playerIndex].redPointsCollected;
+    }
+}
+
+function handleRedPointCollection(data) {
+    if (!data || data.playerIndex === myPlayerIndex) return;
+
+    gameState.redPoints = gameState.redPoints.filter(p => p.id !== data.pointId);
+    const player = gameState.players[data.playerIndex];
     
-    updateAll: function(deltaTime) {
-        GameState.redPoints = GameState.redPoints.filter(point => 
-            this.update(point, deltaTime)
-        );
-    },
-    
-    draw: function(point) {
-        const ctx = GameState.ctx;
-        ctx.fillStyle = 'red';
-        ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
-    },
-    
-    drawAll: function() {
-        GameState.redPoints.forEach(point => {
-            this.draw(point);
-        });
-    },
-    
-    handleCollection: function(data) {
-        GameState.redPoints = GameState.redPoints.filter(p => p.id !== data.pointId);
-        
-        const player = GameState.players[data.playerIndex];
+    if (player) {
         player.redPointsCollected++;
-        
-        HUD.updateRedPoints(data.playerIndex);
-        
-        if (player.redPointsCollected >= CONSTANTS.RED_POINTS_FOR_SHIELD) {
-            Shield.activate(player);
-            player.redPointsCollected -= CONSTANTS.RED_POINTS_FOR_SHIELD;
-            HUD.updateRedPoints(data.playerIndex);
+        updateRedPointsDisplay(data.playerIndex);
+
+        if (player.redPointsCollected >= 25) {
+            player.redPointsCollected = 0;
+            updateRedPointsDisplay(data.playerIndex);
         }
     }
-};
+}

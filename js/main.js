@@ -1,35 +1,29 @@
-// main.js - Point d'entrée principal
-
 window.addEventListener('load', () => {
-    console.log('🚀 Starship Battle - Chargement...');
+    console.log('🚀 Initialisation du jeu Starship Battle...');
     
-    // Initialisation du jeu
-    Game.init();
-    
-    // Initialisation du menu
-    Menu.init();
-    
-    // Vérification de PeerJS
     if (typeof Peer !== 'undefined') {
-        console.log('✅ PeerJS détecté');
-        PeerManager.init();
+        console.log('✅ PeerJS disponible');
+        initPeerJS();
     } else {
-        console.log('⏳ En attente de PeerJS...');
+        console.log('⏳ Attente de PeerJS...');
         setTimeout(() => {
             if (typeof Peer !== 'undefined') {
-                console.log('✅ PeerJS chargé');
-                PeerManager.init();
+                console.log('✅ PeerJS chargé avec succès');
+                initPeerJS();
             } else {
-                console.error('❌ Erreur : PeerJS non disponible');
-                document.getElementById('connectionStatus').textContent = 'Erreur : PeerJS non chargé';
+                console.error('❌ Erreur : PeerJS non chargé');
+                document.getElementById('connectionStatus').textContent = 'Erreur : PeerJS non disponible';
             }
-        }, 1000);
+        }, 2000);
     }
-    
-    // Gestionnaire du bouton reset
-    document.getElementById('resetButton').onclick = () => {
-        Game.reset();
-    };
-    
-    console.log('✅ Jeu prêt !');
 });
+
+window.addEventListener('beforeunload', (e) => {
+    if (gameStarted && connection && connection.open) {
+        e.preventDefault();
+        e.returnValue = 'Vous êtes en cours de partie. Voulez-vous vraiment quitter ?';
+        return e.returnValue;
+    }
+});
+
+console.log("✅ Starship Battle Versus chargé avec succès !");

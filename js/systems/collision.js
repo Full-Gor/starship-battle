@@ -1,130 +1,92 @@
-// collision.js - Système de collisions
+function checkCollisions() {
+    for (let i = 0; i < gameState.players.length; i++) {
+        const player = gameState.players[i];
+        if (!player.active) continue;
 
-const Collision = {
-    checkAll: function() {
-        this.checkBulletPlayerCollisions();
-        this.checkBulletAssistantCollisions();
-        this.checkPowerUpCollisions();
-        this.checkRedPointCollisions();
-    },
-    
-    checkBulletPlayerCollisions: function() {
-        for (let i = 0; i < GameState.players.length; i++) {
-            const player = GameState.players[i];
-            if (!player.active) continue;
-            
-            for (let j = 0; j < GameState.players.length; j++) {
-                if (i === j) continue;
-                
-                const opponent = GameState.players[j];
-                
-                opponent.bullets = opponent.bullets.filter(bullet => {
-                    if (this.checkRectCollision(bullet, player)) {
-                        if (!player.shield) {
-                            const result = Player.takeDamage(player);
-                            
-                            if (result === 'dead') {
-                                Game.end(j);
+        for (let j = 0; j < gameState.players.length; j++) {
+            if (i === j) continue;
+
+            const opponent = gameState.players[j];
+            opponent.bullets = opponent.bullets.filter(bullet => {
+                const dx = Math.abs(bullet.x - player.x);
+                const dy = Math.abs(bullet.y - player.y);
+
+                if (dx < (player.width + bullet.width) / 2 && dy < (player.height + bullet.height) / 2) {
+                    if (!player.shield) {
+                        if (player.powerUpLevel > 0) {
+                            player.powerUpLevel = Math.max(0, player.powerUpLevel - 1);
+                        } else {
+                            player.impacts++;
+                            initializeLives();
+
+                            if (player.impacts >= 10) {
+                                player.active = false;
+                                endGame(j);
+                                return false;
                             }
-                            
-                            SoundManager.play('hit');
                         }
-                        
-                        return false; // Détruire la balle
+                        playSound(soundEffects.hit);
                     }
-                    
-                    return true;
-                });
-            }
-        }
-    },
-    
-    checkBulletAssistantCollisions: function() {
-        for (let i = 0; i < GameState.players.length; i++) {
-            const player = GameState.players[i];
-            
-            for (let j = 0; j < GameState.players.length; j++) {
-                if (i === j) continue;
-                
-                const opponent = GameState.players[j];
-                
-                for (let k = player.assistantShips.length - 1; k >= 0; k--) {
-                    const assistant = player.assistantShips[k];
-                    
-                    opponent.bullets = opponent.bullets.filter(bullet => {
-                        if (this.checkRectCollision(bullet, assistant)) {
-                            if (!assistant.shield) {
-                                assistant.health--;
-                                
-                                if (assistant.health <= 0) {
-                                    // Générer des points rouges
-                                    for (let l = 0; l < 5; l++) {
-                                        RedPoint.create(
-                                            assistant.x + assistant.width / 2,
-                                            assistant.y + assistant.height / 2,
-                                            true
-                                        );
-                                    }
-                                    
-                                    player.assistantShips.splice(k, 1);
-                                }
-                            }
-                            
-                            SoundManager.play('hit');
-                            return false;
-                        }
-                        
-                        return true;
-                    });
-                }
-            }
-        }
-    },
-    
-    checkPowerUpCollisions: function() {
-        GameState.players.forEach((player, index) => {
-            if (!player.active) return;
-            
-            GameState.powerUps = GameState.powerUps.filter(powerUp => {
-                if (this.checkRectCollision(powerUp, player)) {
-                    PowerUp.collect(powerUp, player, index);
                     return false;
                 }
-                
                 return true;
             });
-        });
-    },
-    
-    checkRedPointCollisions: function() {
-        GameState.redPoints = GameState.redPoints.filter(point => {
-            for (let i = 0; i < GameState.players.length; i++) {
-                const player = GameState.players[i];
-                if (!player.active) continue;
-                
-                const dx = player.x - point.x;
-                const dy = player.y - point.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 30) {
-                    if (i === GameState.myPlayerIndex) {
-                        Player.collectRedPoint(player);
-                        NetworkSync.sendRedPointCollected(i, point.id);
-                        SoundManager.play('coin');
+        }
+
+        for (let j = 0; j < gameState.players.length; j++) {
+            if (i === j) continue;
+
+            const opponent = gameState.players[j];
+            opponent.bullets = opponent.bullets.filter(bullet => {
+                for (let k = player.assistantShips.length - 1; k >= 0; k--) {
+                    const assistant = player.assistantShips[k];
+                    const dx = Math.abs(bullet.x - (assistant.x + assistant.width / 2));
+                    const dy = Math.abs(bullet.y - (assistant.y + assistant.height / 2));
+
+                    if (dx < (assistant.width + bullet.width) / 2 && dy < (assistant.height + bullet.height) / 2) {
+                        assistant.health--;
+                        if (assistant.health <= 0) {
+                            for (let l = 0; l < 3; l++) {
+                                gameState.redPoints.push({
+                                    x: assistant.x + assistant.width / 2,
+                                    y: assistant.y + assistant.height / 2,
+                                    vx: (Math.random() - 0.5) * 6,
+                                    vy: (Math.random() - 0.5) * 6,
+                                    id: Date.now() + Math.random() + l,
+                                    size: 3
+                                });
+                            }
+                            player.assistantShips.splice(k, 1);
+                        }
+                        playSound(soundEffects.hit);
+                        return false;
                     }
-                    return false;
                 }
+                return true;
+            });
+        }
+    }
+
+    gameState.players.forEach((player, index) => {
+        if (!player.active) return;
+
+        gameState.powerUps = gameState.powerUps.filter(powerUp => {
+            const dx = Math.abs(powerUp.x + powerUp.width / 2 - player.x);
+            const dy = Math.abs(powerUp.y + powerUp.height / 2 - player.y);
+
+            if (dx < (player.width + powerUp.width) / 2 && dy < (player.height + powerUp.height) / 2) {
+                if (index === myPlayerIndex) {
+                    handlePowerUpCollectionLocal(player, powerUp, index);
+                    sendMessage({
+                        type: 'powerUpCollected',
+                        playerIndex: index,
+                        powerUpId: powerUp.id,
+                        powerUpType: powerUp.type
+                    });
+                }
+                return false;
             }
-            
             return true;
         });
-    },
-    
-    checkRectCollision: function(obj1, obj2) {
-        const dx = Math.abs(obj1.x - obj2.x);
-        const dy = Math.abs(obj1.y - obj2.y);
-        
-        return dx < (obj1.width + obj2.width) / 2 && 
-               dy < (obj1.height + obj2.height) / 2;
-    }
-};
+    });
+}

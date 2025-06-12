@@ -1,75 +1,70 @@
-// connection.js - Gestion des connexions
+function setupConnection(conn) {
+    connection = conn;
 
-const Connection = {
-    setup: function(conn) {
-        GameState.connection = conn;
-        
-        conn.on('open', () => {
-            console.log('Connexion établie !');
-            document.getElementById('connectionStatus').textContent = 'Connecté !';
-            
-            // Envoyer le pseudo local
-            NetworkSync.sendMessage({ type: 'init', pseudo: GameState.myPseudo });
-            Game.start();
+    conn.on('open', () => {
+        console.log('Connexion établie !');
+        document.getElementById('connectionStatus').textContent = 'Connexion réussie ! Démarrage du jeu...';
+        sendMessage({ type: 'init', pseudo: myPseudo });
+        setTimeout(() => startGame(), 1000);
+    });
+
+    conn.on('data', function(data) {
+        handleNetworkMessage(data);
+    });
+
+    conn.on('close', function() {
+        console.log('Connexion fermée');
+        document.getElementById('connectionStatus').textContent = 'Connexion perdue';
+        gameStarted = false;
+    });
+
+    conn.on('error', function(err) {
+        console.error('Erreur de connexion:', err);
+        document.getElementById('connectionStatus').textContent = 'Erreur de connexion: ' + err.message;
+    });
+}
+
+document.getElementById('hostGame').addEventListener('click', () => {
+    document.getElementById('connectionStatus').textContent = 'En attente de connexion... Partagez votre pseudo !';
+    isHost = true;
+    myPlayerIndex = 0;
+});
+
+document.getElementById('copyIdBtn').addEventListener('click', () => {
+    const peerIdText = document.getElementById('peerIdSpan').textContent;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(peerIdText).then(() => {
+            const btn = document.getElementById('copyIdBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Copié !';
+            btn.style.backgroundColor = '#00ff00';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.backgroundColor = '#04fbac';
+            }, 2000);
+        }).catch(() => {
+            alert('Pseudo copié : ' + peerIdText);
         });
-        
-        conn.on('data', (data) => {
-            NetworkSync.handleMessage(data);
-        });
-        
-        conn.on('close', () => {
-            console.log('Connexion fermée');
-            document.getElementById('connectionStatus').textContent = 'Connexion perdue';
-            GameState.opponentPseudo = 'Adversaire';
-            HUD.updateScoreBoard();
-            this.handleDisconnection();
-        });
-        
-        conn.on('error', (err) => {
-            console.error('Erreur de connexion:', err);
-            document.getElementById('connectionStatus').textContent = 'Erreur: ' + err.message;
-        });
-    },
-    
-    handleDisconnection: function() {
-        // Pause le jeu
-        GameState.paused = true;
-        
-        // Afficher un message
-        const messageDiv = document.createElement('div');
-        messageDiv.id = 'disconnectionMessage';
-        messageDiv.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #ff0000;
-            z-index: 1000;
-            text-align: center;
-        `;
-        messageDiv.innerHTML = `
-            <h2 style="color: #ff0000;">Connexion perdue</h2>
-            <p>Votre adversaire s'est déconnecté</p>
-            <button onclick="location.reload()" style="
-                padding: 10px 20px;
-                margin-top: 10px;
-                background: #04fbac;
-                color: black;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-weight: bold;
-            ">Retour au menu</button>
-        `;
-        
-        document.body.appendChild(messageDiv);
-    },
-    
-    isConnected: function() {
-        return GameState.connection && GameState.connection.open;
+    } else {
+        alert('Pseudo : ' + peerIdText);
     }
-};
+});
+
+document.getElementById('joinGame').addEventListener('click', () => {
+    const peerID = document.getElementById('joinGameInput').value.trim();
+    if (peerID && peerID !== myPseudo) {
+        console.log('Tentative de connexion à :', peerID);
+        try {
+            const conn = peer.connect(peerID);
+            setupConnection(conn);
+            isHost = false;
+            myPlayerIndex = 1;
+            document.getElementById('connectionStatus').textContent = 'Connexion en cours...';
+        } catch (err) {
+            console.error('Erreur connexion :', err);
+            document.getElementById('connectionStatus').textContent = 'Erreur de connexion : ' + err.message;
+        }
+    } else {
+        document.getElementById('connectionStatus').textContent = 'Entrez un pseudo valide et différent du vôtre';
+    }
+});

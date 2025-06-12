@@ -1,173 +1,83 @@
-// sync.js - Synchronisation réseau
+function handleNetworkMessage(data) {
+    if (!data || !data.type) return;
 
-const NetworkSync = {
-    lastSyncTime: 0,
-    
-    sendMessage: function(data) {
-        if (GameState.connection && GameState.connection.open) {
-            try {
-                GameState.connection.send(data);
-            } catch (err) {
-                console.error('Erreur envoi message:', err);
+    switch(data.type) {
+        case 'init':
+            opponentPseudo = data.pseudo || 'Adversaire';
+            console.log('Pseudo adversaire reçu :', opponentPseudo);
+            updateScoreBoard();
+            break;
+        case 'playerInput':
+            handleRemotePlayerInput(data);
+            break;
+        case 'bulletFired':
+            addBulletFromNetwork(data);
+            break;
+        case 'powerUpGenerated':
+            if (data.powerUp) gameState.powerUps.push(data.powerUp);
+            break;
+        case 'powerUpCollected':
+            handlePowerUpCollection(data);
+            break;
+        case 'redPointGenerated':
+            if (data.redPoint) gameState.redPoints.push(data.redPoint);
+            break;
+        case 'redPointCollected':
+            handleRedPointCollection(data);
+            break;
+        case 'shieldActivated':
+            if (data.playerIndex >= 0 && data.playerIndex < 2) {
+                activateShield(gameState.players[data.playerIndex]);
             }
-        }
-    },
-    
-    sendPlayerInput: function(player, playerIndex, shot) {
-        // Limiter les envois à 30 fois par seconde
-        const now = Date.now();
-        if (now - this.lastSyncTime < CONSTANTS.NETWORK_SYNC_INTERVAL) return;
-        this.lastSyncTime = now;
-        
-        this.sendMessage({
-            type: 'playerInput',
-            playerIndex: playerIndex,
-            x: player.x,
-            y: player.y,
-            shot: shot
-        });
-    },
-    
-    sendBulletsFired: function(bullets, playerIndex) {
-        this.sendMessage({
-            type: 'bulletFired',
-            bullets: bullets,
-            playerIndex: playerIndex
-        });
-    },
-    
-    sendPowerUpGenerated: function(powerUp) {
-        this.sendMessage({
-            type: 'powerUpGenerated',
-            powerUp: powerUp
-        });
-    },
-    
-    sendPowerUpCollected: function(playerIndex, powerUpId, powerUpType) {
-        this.sendMessage({
-            type: 'powerUpCollected',
-            playerIndex: playerIndex,
-            powerUpId: powerUpId,
-            powerUpType: powerUpType
-        });
-    },
-    
-    sendRedPointCollected: function(playerIndex, pointId) {
-        this.sendMessage({
-            type: 'redPointCollected',
-            playerIndex: playerIndex,
-            pointId: pointId
-        });
-    },
-    
-    sendShieldActivated: function(playerIndex) {
-        this.sendMessage({
-            type: 'shieldActivated',
-            playerIndex: playerIndex
-        });
-    },
-    
-    sendThunderActivated: function(playerIndex) {
-        this.sendMessage({
-            type: 'thunderActivated',
-            playerIndex: playerIndex
-        });
-    },
-    
-    sendAssistantCreated: function(playerIndex, assistant) {
-        this.sendMessage({
-            type: 'assistantCreated',
-            playerIndex: playerIndex,
-            assistant: {
-                x: assistant.x,
-                y: assistant.y,
-                imageIndex: assistant.imageIndex
+            break;
+        case 'thunderActivated':
+            if (data.playerIndex >= 0 && data.playerIndex < 2) {
+                activateThunder(gameState.players[data.playerIndex]);
             }
-        });
-    },
-    
-    sendPing: function() {
-        this.sendMessage({
-            type: 'ping',
-            timestamp: Date.now()
-        });
-    },
-    
-    sendReset: function() {
-        this.sendMessage({
-            type: 'resetGame'
-        });
-    },
-    
-    handleMessage: function(data) {
-        switch(data.type) {
-            case 'init':
-                GameState.opponentPseudo = data.pseudo || 'Adversaire';
-                console.log('Pseudo adversaire reçu:', GameState.opponentPseudo);
-                HUD.updateScoreBoard();
-                break;
-                
-            case 'playerInput':
-                this.handleRemotePlayerInput(data);
-                break;
-                
-            case 'bulletFired':
-                this.handleBulletsFired(data);
-                break;
-                
-            case 'powerUpGenerated':
-                GameState.powerUps.push(data.powerUp);
-                break;
-                
-            case 'powerUpCollected':
-                PowerUp.handleCollection(data);
-                break;
-                
-            case 'redPointCollected':
-                RedPoint.handleCollection(data);
-                break;
-                
-            case 'shieldActivated':
-                Shield.activate(GameState.players[data.playerIndex]);
-                break;
-                
-            case 'thunderActivated':
-                Thunder.activate(GameState.players[data.playerIndex]);
-                break;
-                
-            case 'assistantCreated':
-                Assistant.createFromNetwork(GameState.players[data.playerIndex], data.assistant);
-                break;
-                
-            case 'ping':
-                this.sendMessage({type: 'pong', timestamp: data.timestamp});
-                break;
-                
-            case 'pong':
-                GameState.networkLatency = Date.now() - data.timestamp;
-                document.getElementById('statusText').textContent = `Connecté (${GameState.networkLatency}ms)`;
-                break;
-                
-            case 'resetGame':
-                Game.reset();
-                break;
-        }
-    },
-    
-    handleRemotePlayerInput: function(data) {
-        const player = GameState.players[data.playerIndex];
-        player.x = data.x;
-        player.y = data.y;
-        
-        if (data.shot) {
-            Bullet.shoot(player, data.playerIndex);
-        }
-    },
-    
-    handleBulletsFired: function(data) {
-        const player = GameState.players[data.playerIndex];
-        data.bullets.forEach(bulletData => {
-            player.bullets.push(bulletData);
-        });
+            break;
+        case 'assistantCreated':
+            if (data.playerIndex >= 0 && data.playerIndex < 2 && data.assistant) {
+                createAssistantShip(gameState.players[data.playerIndex], data.assistant);
+            }
+            break;
+        case 'ping':
+            sendMessage({type: 'pong', timestamp: data.timestamp});
+            break;
+        case 'pong':
+            if (data.timestamp) {
+                networkLatency = Date.now() - data.timestamp;
+                document.getElementById('statusText').textContent = `Connecté (${networkLatency}ms)`;
+            }
+            break;
+        case 'resetGame':
+            resetGame();
+            break;
+        case 'gameState':
+            if (data.gameState && !isHost) {
+                syncGameState(data.gameState);
+            }
+            break;
     }
-};
+}
+
+function sendMessage(data) {
+    if (connection && connection.open) {
+        try {
+            connection.send(data);
+        } catch (err) {
+            console.error('Erreur envoi message :', err);
+        }
+    }
+}
+
+function syncGameState(remoteState) {
+    if (remoteState.powerUps) {
+        gameState.powerUps = remoteState.powerUps;
+    }
+    if (remoteState.redPoints) {
+        gameState.redPoints = remoteState.redPoints;
+    }
+    if (remoteState.laserTraits) {
+        gameState.laserTraits = remoteState.laserTraits;
+    }
+}

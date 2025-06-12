@@ -1,88 +1,63 @@
-/* game-ui.css - Interface de jeu */
-
-#scoreBoard {
-    position: absolute;
-    top: 10px;
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-    color: white;
-    z-index: 20;
-}
-
-.team-score {
-    display: flex;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 10px 20px;
-    border-radius: 10px;
-}
-
-.lives-container {
-    display: flex;
-    align-items: center;
-    margin-left: 10px;
-}
-
-.life-icon {
-    width: 20px;
-    height: 20px;
-    margin-right: 5px;
-    background: red;
-    border-radius: 50%;
-}
-
-.point-counter {
-    position: absolute;
-    font-size: 20px;
-    font-weight: bold;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 10px 15px;
-    border-radius: 10px;
-    border: 2px solid;
-}
-
-#team1Points {
-    top: 60px;
-    right: 15px;
-    color: #04fbac;
-    border-color: #04fbac;
-    display: flex;
-}
-
-#team2Points {
-    bottom: 60px;
-    right: 15px;
-    color: #FF7F50;
-    border-color: #FF7F50;
-}
-
-#gameOverMessage {
-    position: absolute;
+#connectionPanel {
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px solid #04fbac;
     color: white;
-    padding: 20px 40px;
-    border-radius: 10px;
-    font-size: 24px;
     text-align: center;
-    z-index: 100;
-    display: none;
+    z-index: 1000;
+    min-width: 400px;
 }
 
-#networkStatus {
-    position: absolute;
-    top: 10px;
-    left: 10px;
+#connectionPanel h2 {
     color: #04fbac;
-    font-size: 14px;
-    z-index: 20;
+    margin-bottom: 20px;
+}
+
+#connectionPanel input {
+    padding: 10px;
+    margin: 10px;
+    border: 2px solid #04fbac;
+    border-radius: 5px;
     background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 16px;
+    width: 200px;
+}
+
+#connectionPanel button {
+    padding: 12px 24px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    background: #04fbac;
+    color: black;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#connectionPanel button:hover {
+    background: #FF7F50;
+    transform: scale(1.05);
+}
+
+#connectionPanel button:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#myPeerID {
+    background: rgba(4, 251, 172, 0.2);
     padding: 10px;
     border-radius: 5px;
+    margin: 10px 0;
+    font-family: monospace;
+    word-break: break-all;
 }
