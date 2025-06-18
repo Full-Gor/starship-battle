@@ -42,103 +42,95 @@ function startGame() {
             if (gameStarted && !gameState.gameOver && gameState.laserTraits.length < 8) {
                 generateLaserTrait();
             }
-        }, 2000);
-
-        setInterval(() => {
-            if (gameStarted && !gameState.gameOver && gameState.redPoints.length < 15) {
-                generateRedPoints();
-            }
-        }, 3000);
+        }, 5000);
     }
 
     gameLoop();
 }
 
 function initializeGame() {
-    if (gameInitialized) return;
-    
     console.log('Initialisation du jeu...');
+
+    if (gameInitialized) return;
+    gameInitialized = true;
+
     const midPoint = canvas.height / 2;
 
-    gameState.players[0].x = canvas.width * 0.5;
-    gameState.players[0].y = canvas.height * 0.25;
-    gameState.players[0].active = true;
-    gameState.players[0].lives = 10;
-    gameState.players[0].impacts = 0;
-    gameState.players[0].bullets = [];
-    gameState.players[0].powerUpLevel = 0;
-    gameState.players[0].shield = false;
-    gameState.players[0].redPointsCollected = 0;
-    gameState.players[0].thunderActive = false;
-    gameState.players[0].assistantShips = [];
-    gameState.players[0].lastShootTime = 0;
+    gameState.players[0] = {
+        x: canvas.width / 4,
+        y: midPoint / 2,
+        width: 50,
+        height: 50,
+        lives: 10,
+        bullets: [],
+        powerUpLevel: 0,
+        active: true,
+        shield: false,
+        shieldTimeout: null,
+        points: 0,
+        impacts: 0,
+        redPointsCollected: 0,
+        assistantShips: [],
+        gamesWon: gameState.players[0].gamesWon || 0,
+        lastShootTime: 0
+    };
 
-    gameState.players[1].x = canvas.width * 0.5;
-    gameState.players[1].y = canvas.height * 0.75;
-    gameState.players[1].active = true;
-    gameState.players[1].lives = 10;
-    gameState.players[1].impacts = 0;
-    gameState.players[1].bullets = [];
-    gameState.players[1].powerUpLevel = 0;
-    gameState.players[1].shield = false;
-    gameState.players[1].redPointsCollected = 0;
-    gameState.players[1].thunderActive = false;
-    gameState.players[1].assistantShips = [];
-    gameState.players[1].lastShootTime = 0;
+    gameState.players[1] = {
+        x: canvas.width * 3 / 4,
+        y: midPoint + midPoint / 2,
+        width: 50,
+        height: 50,
+        lives: 10,
+        bullets: [],
+        powerUpLevel: 0,
+        active: true,
+        shield: false,
+        shieldTimeout: null,
+        points: 0,
+        impacts: 0,
+        redPointsCollected: 0,
+        assistantShips: [],
+        gamesWon: gameState.players[1].gamesWon || 0,
+        lastShootTime: 0
+    };
 
     gameState.powerUps = [];
     gameState.redPoints = [];
     gameState.laserTraits = [];
-    gameState.gameOver = false;
-    gameState.winner = null;
     shieldParticles.particles = [];
 
     initializeLives();
-    gameInitialized = true;
-    
-    console.log('Jeu initialisé avec succès');
 }
 
 function gameLoop() {
-    if (!gameStarted) return;
+    if (!gameStarted || gameState.paused || !canvas || !ctx) return;
 
     const currentTime = Date.now();
-    const deltaTime = currentTime - lastFrameTime;
+    const deltaTime = (currentTime - lastFrameTime) / 1000;
     lastFrameTime = currentTime;
 
-    if (deltaTime < 16) {
-        requestAnimationFrame(gameLoop);
-        return;
+    handleLocalPlayerInput();
+    updatePowerUps();
+    updateBullets();
+    updateRedPoints();
+    updateAssistants();
+    updateShieldParticles();
+    updateLaserTraits();
+    checkCollisions();
+
+    render();
+
+    if (isHost && currentTime - lastPingTime > 2000) {
+        sendMessage({ type: 'ping', timestamp: Date.now() });
+        lastPingTime = currentTime;
     }
 
-    try {
-        handleLocalPlayerInput();
-        updateBullets();
-        updatePowerUps();
-        updateRedPoints();
-        updateThunder();
-        updateAssistantShips();
-        updateShieldParticles();
-        updateLaserTraits();
-        checkCollisions();
-        render();
-
-        if (currentTime % 2000 < 50) {
-            sendMessage({ type: 'ping', timestamp: currentTime });
-        }
-
-        if (isHost && currentTime % 5000 < 50) {
-            sendMessage({
-                type: 'gameState',
-                gameState: {
-                    powerUps: gameState.powerUps,
-                    redPoints: gameState.redPoints,
-                    laserTraits: gameState.laserTraits
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Erreur dans la boucle de jeu:', error);
+    if (isHost && !gameState.gameOver) {
+        sendMessage({ type: 'gameState', gameState: {
+            powerUps: gameState.powerUps,
+            redPoints: gameState.redPoints,
+            laserTraits: gameState.laserTraits
+        }});
     }
 
     requestAnimationFrame(gameLoop);

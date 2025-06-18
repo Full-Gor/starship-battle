@@ -30,3 +30,11 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 console.log("✅ Starship Battle Versus chargé avec succès !");
+
+function initializeGameApp() {
+    loadImages();
+    initPeerJS();
+    console.log('✅ Starship Battle Versus chargé avec succès !');
+}
+
+document.addEventListener('DOMContentLoaded', initializeGameApp);
