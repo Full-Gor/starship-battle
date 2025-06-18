@@ -7,12 +7,22 @@ if (typeof window.gameCanvas === 'undefined') {
 }
 
 let lastFrameTime = Date.now();
+let lastPingTime = Date.now();
 let gameInitialized = false;
+let mouseX = 0;
+let mouseY = 0;
 
 function initGame() {
     window.gameCanvas.canvas = document.getElementById('gameCanvas');
     if (!window.gameCanvas.canvas) return;
     window.gameCanvas.ctx = window.gameCanvas.canvas.getContext('2d');
+
+    // Ajouter les écouteurs d'événements pour la souris
+    window.gameCanvas.canvas.addEventListener('mousemove', (e) => {
+        const rect = window.gameCanvas.canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+    });
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
@@ -149,4 +159,40 @@ function gameLoop() {
     }
 
     requestAnimationFrame(gameLoop);
+}
+
+function handleLocalPlayerInput() {
+    if (!gameStarted || !gameState.players[myPlayerIndex]) return;
+
+    const player = gameState.players[myPlayerIndex];
+    const targetX = mouseX;
+    const targetY = mouseY;
+
+    // Calculer la direction et la distance
+    const dx = targetX - player.x;
+    const dy = targetY - player.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Vitesse de déplacement
+    const speed = 5;
+
+    if (distance > 5) {
+        // Normaliser la direction
+        const dirX = dx / distance;
+        const dirY = dy / distance;
+
+        // Mettre à jour la position
+        player.x += dirX * speed;
+        player.y += dirY * speed;
+
+        // Envoyer la mise à jour de position
+        if (isHost) {
+            sendMessage({
+                type: 'playerUpdate',
+                playerIndex: myPlayerIndex,
+                x: player.x,
+                y: player.y
+            });
+        }
+    }
 }
