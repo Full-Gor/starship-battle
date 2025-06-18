@@ -10,13 +10,21 @@ window.addEventListener('load', () => {
     
     if (typeof Peer !== 'undefined') {
         console.log('✅ PeerJS disponible');
-        initPeerJS();
+        if (typeof window.initPeerJS === 'function') {
+            window.initPeerJS();
+        } else {
+            console.error('❌ initPeerJS non disponible');
+        }
     } else {
         console.log('⏳ Attente de PeerJS...');
         setTimeout(() => {
             if (typeof Peer !== 'undefined') {
                 console.log('✅ PeerJS chargé avec succès');
-                initPeerJS();
+                if (typeof window.initPeerJS === 'function') {
+                    window.initPeerJS();
+                } else {
+                    console.error('❌ initPeerJS non disponible');
+                }
             } else {
                 console.error('❌ Erreur : PeerJS non chargé');
                 document.getElementById('connectionStatus').textContent = 'Erreur : PeerJS non disponible';
@@ -41,7 +49,11 @@ function initializeGameApp() {
     } else {
         console.error('❌ ImageLoader non disponible');
     }
-    initPeerJS();
+    if (typeof window.initPeerJS === 'function') {
+        window.initPeerJS();
+    } else {
+        console.error('❌ initPeerJS non disponible');
+    }
     console.log('✅ Starship Battle Versus chargé avec succès !');
 }
 
