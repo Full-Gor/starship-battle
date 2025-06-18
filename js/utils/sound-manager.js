@@ -1,27 +1,51 @@
 // Initialisation des sons
 if (typeof window.soundEffects === 'undefined') {
-    window.soundEffects = {
-        shoot: new Audio('./assets/audio/shoot.mp3'),
-        hit: new Audio('./assets/audio/hit.mp3'),
-        perfect: new Audio('./assets/audio/perfect.mp3'),
-        awesome: new Audio('./assets/audio/awesome.mp3'),
-        gameOver: new Audio('./assets/audio/gameOver.mp3'),
-        coin: new Audio('./assets/audio/coin.mp3'),
-        king: new Audio('./assets/audio/king.mp3')
+    window.soundEffects = {};
+    
+    const audioFiles = {
+        shoot: 'shoot.mp3',
+        hit: 'hit.mp3',
+        perfect: 'perfect.mp3',
+        awesome: 'awesome.mp3',
+        gameOver: 'gameOver.mp3',
+        coin: 'coin.mp3',
+        king: 'king.mp3'
     };
+
+    // Fonction pour charger un fichier audio avec gestion d'erreur
+    function loadAudio(name, file) {
+        const audio = new Audio(`assets/audio/${file}`);
+        audio.onerror = () => {
+            console.warn(`Impossible de charger le son: ${file}`);
+        };
+        audio.oncanplaythrough = () => {
+            console.log(`Son chargé: ${file}`);
+        };
+        return audio;
+    }
+
+    // Chargement des sons
+    Object.entries(audioFiles).forEach(([key, file]) => {
+        window.soundEffects[key] = loadAudio(key, file);
+    });
 }
 
 function playSound(sound) {
     if (!sound) return;
     try {
-        sound.currentTime = 0;
-        const playPromise = sound.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.log('Erreur lecture audio:', error);
-            });
+        // Vérifier si le son est chargé et prêt
+        if (sound.readyState >= 2) {
+            sound.currentTime = 0;
+            const playPromise = sound.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.warn('Erreur lecture audio:', error);
+                });
+            }
+        } else {
+            console.warn('Son non chargé');
         }
     } catch (error) {
-        console.log('Audio non disponible');
+        console.warn('Erreur audio:', error);
     }
 }

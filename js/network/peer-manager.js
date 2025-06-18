@@ -24,65 +24,84 @@ window.myPseudo = null;
 window.isHost = false;
 window.myPlayerIndex = 0;
 
+function generatePeerId() {
+    const adjectives = ['Astral', 'Cosmic', 'Solar', 'Lunar', 'Stellar', 'Space', 'Star', 'Galaxy'];
+    const nouns = ['Pilot', 'Captain', 'Navigator', 'Explorer', 'Voyager', 'Warrior', 'Commander'];
+    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    const randomNumber = Math.floor(Math.random() * 1000);
+    return `${randomAdjective}${randomNoun}${randomNumber}`;
+}
+
 function initPeerJS() {
     try {
-        // Générer un pseudo aléatoire
-        const adjectives = ['Solaire', 'Cosmique', 'Galactique', 'Stellaire', 'Nébuleux', 'Astral', 'Céleste', 'Lunaire', 'Spatial', 'Orbital'];
-        const nouns = ['Vaisseau', 'Pilote', 'Guerrier', 'Explorateur', 'Chasseur', 'Navigateur', 'Voyageur', 'Aventurier', 'Découvreur', 'Marin'];
-        const randomNum = Math.floor(Math.random() * 1000);
-        window.myPseudo = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${randomNum}`;
+        window.myPseudo = generatePeerId();
         console.log('Pseudo généré :', window.myPseudo);
 
-        // Initialiser PeerJS avec les options
-        window.peer = new Peer(window.myPseudo, peerOptions);
+        const peerConfig = {
+            host: 'peerjs.herokuapp.com',
+            secure: true,
+            port: 443,
+            config: {
+                'iceServers': [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            },
+            debug: 2,
+            retries: 3
+        };
 
-        window.peer.on('open', (id) => {
-            console.log('PeerJS ouvert, ID:', id);
+        window.peer = new Peer(window.myPseudo, peerConfig);
+
+        window.peer.on('open', function(id) {
+            console.log('Connecté au serveur PeerJS avec l\'ID:', id);
             document.getElementById('peerIdSpan').textContent = id;
             document.getElementById('copyIdBtn').style.display = 'inline-block';
             document.getElementById('hostGame').disabled = false;
+            updateConnectionStatus('Connecté au serveur');
         });
 
-        window.peer.on('connection', (conn) => {
-            console.log('Connexion entrante de :', conn.peer);
-            setupConnection(conn);
-        });
-
-        window.peer.on('error', (err) => {
+        window.peer.on('error', function(err) {
             console.error('Erreur PeerJS :', err);
-            document.getElementById('connectionStatus').textContent = 'Erreur de connexion : ' + err.message;
+            updateConnectionStatus('Erreur de connexion');
             
-            // Tentative de reconnexion après 5 secondes
-            setTimeout(() => {
-                console.log('Tentative de reconnexion...');
-                if (window.peer && window.peer.destroyed) {
+            if (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error') {
+                setTimeout(() => {
+                    console.log('Tentative de reconnexion...');
+                    updateConnectionStatus('Tentative de reconnexion...');
+                    window.peer.destroy();
                     initPeerJS();
+                }, 5000);
+            }
+        });
+
+        window.peer.on('disconnected', function() {
+            console.log('Déconnecté du serveur PeerJS');
+            updateConnectionStatus('Déconnecté');
+            
+            setTimeout(() => {
+                if (!window.peer.destroyed) {
+                    window.peer.reconnect();
                 }
             }, 5000);
         });
 
-        window.peer.on('disconnected', () => {
-            console.log('Déconnecté du serveur PeerJS');
-            document.getElementById('connectionStatus').textContent = 'Déconnecté. Tentative de reconnexion...';
-            
-            // Tentative de reconnexion après 3 secondes
-            setTimeout(() => {
-                console.log('Tentative de reconnexion...');
-                if (window.peer && window.peer.destroyed) {
-                    initPeerJS();
-                }
-            }, 3000);
+        window.peer.on('close', function() {
+            console.log('Connexion PeerJS fermée');
+            updateConnectionStatus('Connexion fermée');
         });
 
     } catch (error) {
         console.error('Erreur lors de l\'initialisation de PeerJS:', error);
-        document.getElementById('connectionStatus').textContent = 'Erreur d\'initialisation : ' + error.message;
-        
-        // Tentative de réinitialisation après 5 secondes
-        setTimeout(() => {
-            console.log('Tentative de réinitialisation...');
-            initPeerJS();
-        }, 5000);
+        updateConnectionStatus('Erreur d\'initialisation');
+    }
+}
+
+function updateConnectionStatus(status) {
+    const statusElement = document.getElementById('connectionStatus');
+    if (statusElement) {
+        statusElement.textContent = status;
     }
 }
 
