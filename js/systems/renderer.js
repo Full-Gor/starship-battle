@@ -23,19 +23,20 @@ function render() {
           ctx.translate(powerUp.x + powerUp.width / 2, powerUp.y + powerUp.height / 2);
           ctx.rotate(powerUp.rotation || 0);
 
-          ctx.shadowColor = ['#ff0000', '#ff00ff', '#ffff00'][powerUp.type - 1]; // Ajusté pour type 1 et 2
+          const powerUpImg = ImageLoader.get(`powerUp${powerUp.type}`);
+          ctx.shadowColor = ['#ff0000', '#ff00ff', '#ffff00'][powerUp.type];
           ctx.shadowBlur = 15;
 
-          if (powerUpImgs[powerUp.type - 1] && powerUpImgs[powerUp.type - 1].complete) {
+          if (powerUpImg && powerUpImg.complete) {
               ctx.drawImage(
-                  powerUpImgs[powerUp.type - 1],
+                  powerUpImg,
                   -powerUp.width / 2,
                   -powerUp.height / 2,
                   powerUp.width,
                   powerUp.height
               );
           } else {
-              ctx.fillStyle = ['#ff0000', '#ff00ff', '#ffff00'][powerUp.type - 1];
+              ctx.fillStyle = ['#ff0000', '#ff00ff', '#ffff00'][powerUp.type];
               ctx.fillRect(-powerUp.width / 2, -powerUp.height / 2, powerUp.width, powerUp.height);
           }
           ctx.restore();
@@ -52,7 +53,8 @@ function render() {
           ctx.restore();
       });
 
-      gameState.players.forEach(player => {
+      gameState.players.forEach((player, index) => {
+          // Dessiner les balles
           player.bullets.forEach(bullet => {
               ctx.save();
               ctx.fillStyle = bullet.color;
@@ -63,11 +65,50 @@ function render() {
               ctx.fill();
               ctx.restore();
           });
-      });
 
-      drawShields();
-      drawAssistants();
-      drawPlayers();
+          // Dessiner le joueur
+          if (player.active) {
+              ctx.save();
+              const playerImg = ImageLoader.get(index === 0 ? 'starship1' : 'starship2');
+              if (playerImg && playerImg.complete) {
+                  ctx.drawImage(playerImg, player.x - player.width/2, player.y - player.height/2, player.width, player.height);
+              } else {
+                  ctx.fillStyle = index === 0 ? '#04fbac' : '#FF7F50';
+                  ctx.fillRect(player.x - player.width/2, player.y - player.height/2, player.width, player.height);
+              }
+              ctx.restore();
+          }
+
+          // Dessiner les assistants
+          player.assistantShips.forEach((assistant, i) => {
+              ctx.save();
+              const assistantImg = ImageLoader.get(`assistant${(i % 6) + 1}`);
+              if (assistantImg && assistantImg.complete) {
+                  ctx.drawImage(
+                      assistantImg,
+                      assistant.x,
+                      assistant.y,
+                      assistant.width,
+                      assistant.height
+                  );
+              } else {
+                  ctx.fillStyle = index === 0 ? '#04fbac' : '#FF7F50';
+                  ctx.fillRect(assistant.x, assistant.y, assistant.width, assistant.height);
+              }
+              ctx.restore();
+          });
+
+          // Dessiner le bouclier si actif
+          if (player.shield) {
+              ctx.save();
+              ctx.strokeStyle = index === 0 ? '#04fbac' : '#FF7F50';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(player.x, player.y, player.width * 0.8, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.restore();
+          }
+      });
   }
 
   function drawStarField() {

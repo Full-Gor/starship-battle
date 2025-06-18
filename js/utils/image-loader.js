@@ -1,26 +1,54 @@
-const starshipImg = new Image();
-starshipImg.src = '../assets/img/starship7.jpg';
-const starship2Img = new Image();
-starship2Img.src = '../assets/img/starship6.jpg';
-
-const powerUpImgs = [];
-for (let i = 0; i < 3; i++) {
-    powerUpImgs[i] = new Image();
-    powerUpImgs[i].src = '../assets/img/powerUp' + (i === 0 ? '' : i) + '.jpg';
-}
-
-const livesImg = new Image();
-livesImg.src = '../assets/img/lives.jpg';
-
-// const thunderImgs = [];
-// for (let i = 0; i < 3; i++) {
-//     thunderImgs[i] = new Image();
-//     thunderImgs[i].src = '../assets/img/thunderImgs' + (i + 1) + '.jpg';
-// }
-
-const assistantShipImgs = [];
-for (let i = 1; i <= 6; i++) {
-    const img = new Image();
-    img.src = `../assets/img/starship${i}.jpg`;
-    assistantShipImgs.push(img);
-}
+const ImageLoader = {
+    images: {},
+    loaded: false,
+    loadedCount: 0,
+    totalCount: 0,
+    
+    loadAll: function() {
+        const imagesToLoad = {
+            starship1: 'assets/img/starship7.jpg',
+            starship2: 'assets/img/starship6.jpg',
+            powerUp0: 'assets/img/powerUp.jpg',
+            powerUp1: 'assets/img/powerUp1.jpg',
+            powerUp2: 'assets/img/powerUp2.jpg',
+            lives: 'assets/img/lives.jpg',
+            assistant1: 'assets/img/starship1.jpg',
+            assistant2: 'assets/img/starship2.jpg',
+            assistant3: 'assets/img/starship3.jpg',
+            assistant4: 'assets/img/starship4.jpg',
+            assistant5: 'assets/img/starship5.jpg',
+            assistant6: 'assets/img/starship6.jpg'
+        };
+        
+        this.totalCount = Object.keys(imagesToLoad).length;
+        
+        Object.entries(imagesToLoad).forEach(([key, path]) => {
+            const img = new Image();
+            img.onload = () => {
+                this.loadedCount++;
+                console.log(`Image chargée: ${key} (${this.loadedCount}/${this.totalCount})`);
+                
+                if (this.loadedCount === this.totalCount) {
+                    this.loaded = true;
+                    console.log('✅ Toutes les images sont chargées');
+                }
+            };
+            
+            img.onerror = () => {
+                console.error(`❌ Erreur chargement image: ${key} (${path})`);
+                this.loadedCount++;
+            };
+            
+            img.src = path;
+            this.images[key] = img;
+        });
+    },
+    
+    get: function(name) {
+        return this.images[name] || null;
+    },
+    
+    isReady: function() {
+        return this.loaded;
+    }
+};
