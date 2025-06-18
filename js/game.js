@@ -1,24 +1,31 @@
-let canvas, ctx;
+// Variables globales du jeu
+if (typeof window.gameCanvas === 'undefined') {
+    window.gameCanvas = {
+        canvas: null,
+        ctx: null
+    };
+}
 
 let lastFrameTime = Date.now();
 let gameInitialized = false;
 
 function initGame() {
-    canvas = document.getElementById('gameCanvas');
-    if (!canvas) return;
-    ctx = canvas.getContext('2d');
+    window.gameCanvas.canvas = document.getElementById('gameCanvas');
+    if (!window.gameCanvas.canvas) return;
+    window.gameCanvas.ctx = window.gameCanvas.canvas.getContext('2d');
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 }
 
 function resizeCanvas() {
-    if (!canvas) return;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    if (!window.gameCanvas.canvas) return;
+    window.gameCanvas.canvas.width = window.innerWidth;
+    window.gameCanvas.canvas.height = window.innerHeight;
 }
 
-function startGame() {
+// Rendre startGame accessible globalement
+window.startGame = function() {
     if (gameStarted) return;
     
     console.log('Démarrage du jeu...');
@@ -54,7 +61,7 @@ function startGame() {
     }
 
     gameLoop();
-}
+};
 
 function initializeGame() {
     console.log('Initialisation du jeu...');
@@ -62,10 +69,10 @@ function initializeGame() {
     if (gameInitialized) return;
     gameInitialized = true;
 
-    const midPoint = canvas.height / 2;
+    const midPoint = window.gameCanvas.canvas.height / 2;
 
     gameState.players[0] = {
-        x: canvas.width / 4,
+        x: window.gameCanvas.canvas.width / 4,
         y: midPoint / 2,
         width: 50,
         height: 50,
@@ -84,7 +91,7 @@ function initializeGame() {
     };
 
     gameState.players[1] = {
-        x: canvas.width * 3 / 4,
+        x: window.gameCanvas.canvas.width * 3 / 4,
         y: midPoint + midPoint / 2,
         width: 50,
         height: 50,
@@ -111,7 +118,7 @@ function initializeGame() {
 }
 
 function gameLoop() {
-    if (!gameStarted || gameState.paused || !canvas || !ctx) return;
+    if (!gameStarted || gameState.paused || !window.gameCanvas.canvas || !window.gameCanvas.ctx) return;
 
     const currentTime = Date.now();
     const deltaTime = (currentTime - lastFrameTime) / 1000;

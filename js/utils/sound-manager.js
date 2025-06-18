@@ -1,7 +1,6 @@
 // Initialisation des sons
-let soundEffects;
-if (typeof soundEffects === 'undefined') {
-    soundEffects = {
+if (typeof window.soundEffects === 'undefined') {
+    window.soundEffects = {
         shoot: new Audio('assets/audio/shoot.mp3'),
         hit: new Audio('assets/audio/hit.mp3'),
         perfect: new Audio('assets/audio/perfect.mp3'),
