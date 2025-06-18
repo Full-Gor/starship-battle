@@ -3,9 +3,20 @@ function setupConnection(conn) {
 
     conn.on('open', () => {
         console.log('Connexion établie !');
-        document.getElementById('connectionStatus').textContent = 'Connexion réussie ! Démarrage du jeu...';
-        sendMessage({ type: 'init', pseudo: myPseudo });
-        setTimeout(() => startGame(), 1000);
+        document.getElementById('connectionStatus').textContent = 'Connexion réussie ! Chargement des images...';
+        
+        // Vérifier si les images sont chargées
+        if (ImageLoader.isReady()) {
+            startGameAfterConnection();
+        } else {
+            // Attendre que les images soient chargées
+            const checkImagesInterval = setInterval(() => {
+                if (ImageLoader.isReady()) {
+                    clearInterval(checkImagesInterval);
+                    startGameAfterConnection();
+                }
+            }, 100);
+        }
     });
 
     conn.on('data', function(data) {
@@ -22,6 +33,12 @@ function setupConnection(conn) {
         console.error('Erreur de connexion:', err);
         document.getElementById('connectionStatus').textContent = 'Erreur de connexion: ' + err.message;
     });
+}
+
+function startGameAfterConnection() {
+    document.getElementById('connectionStatus').textContent = 'Connexion réussie ! Démarrage du jeu...';
+    sendMessage({ type: 'init', pseudo: myPseudo });
+    setTimeout(() => startGame(), 1000);
 }
 
 document.getElementById('hostGame').addEventListener('click', () => {
