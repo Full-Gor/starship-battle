@@ -1,8 +1,9 @@
-let connection;
-let gameStarted = false;
+// Variables globales
+window.connection = null;
+window.gameStarted = false;
 
 function setupConnection(conn) {
-    connection = conn;
+    window.connection = conn;
 
     conn.on('open', () => {
         console.log('Connexion établie !');
@@ -33,14 +34,14 @@ function setupConnection(conn) {
     conn.on('close', function() {
         console.log('Connexion fermée');
         document.getElementById('connectionStatus').textContent = 'Connexion perdue';
-        gameStarted = false;
+        window.gameStarted = false;
         
         // Tentative de reconnexion si on est l'hôte
-        if (isHost) {
+        if (window.isHost) {
             setTimeout(() => {
                 console.log('Tentative de reconnexion...');
-                if (peer && !peer.destroyed) {
-                    const newConn = peer.connect(conn.peer);
+                if (window.peer && !window.peer.destroyed) {
+                    const newConn = window.peer.connect(conn.peer);
                     if (newConn) {
                         setupConnection(newConn);
                     }
@@ -57,7 +58,7 @@ function setupConnection(conn) {
 
 function startGameAfterConnection() {
     document.getElementById('connectionStatus').textContent = 'Connexion réussie ! Démarrage du jeu...';
-    sendMessage({ type: 'init', pseudo: myPseudo });
+    sendMessage({ type: 'init', pseudo: window.myPseudo });
     
     // Augmenter le délai pour s'assurer que tout est prêt
     setTimeout(() => {
@@ -71,9 +72,9 @@ function startGameAfterConnection() {
 }
 
 function sendMessage(message) {
-    if (connection && connection.open) {
+    if (window.connection && window.connection.open) {
         try {
-            connection.send(message);
+            window.connection.send(message);
         } catch (error) {
             console.error('Erreur lors de l\'envoi du message:', error);
         }
@@ -84,8 +85,8 @@ function sendMessage(message) {
 
 document.getElementById('hostGame').addEventListener('click', () => {
     document.getElementById('connectionStatus').textContent = 'En attente de connexion... Partagez votre pseudo !';
-    isHost = true;
-    myPlayerIndex = 0;
+    window.isHost = true;
+    window.myPlayerIndex = 0;
 });
 
 document.getElementById('copyIdBtn').addEventListener('click', () => {
@@ -110,16 +111,16 @@ document.getElementById('copyIdBtn').addEventListener('click', () => {
 
 document.getElementById('joinGame').addEventListener('click', () => {
     const peerID = document.getElementById('joinGameInput').value.trim();
-    if (peerID && peerID !== myPseudo) {
+    if (peerID && peerID !== window.myPseudo) {
         console.log('Tentative de connexion à :', peerID);
         try {
-            const conn = peer.connect(peerID, {
+            const conn = window.peer.connect(peerID, {
                 reliable: true,
                 serialization: 'json'
             });
             setupConnection(conn);
-            isHost = false;
-            myPlayerIndex = 1;
+            window.isHost = false;
+            window.myPlayerIndex = 1;
             document.getElementById('connectionStatus').textContent = 'Connexion en cours...';
         } catch (err) {
             console.error('Erreur connexion :', err);

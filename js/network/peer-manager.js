@@ -18,10 +18,11 @@ const peerOptions = {
     debug: 3
 };
 
-let peer;
-let myPseudo;
-let isHost = false;
-let myPlayerIndex = 0;
+// Variables globales
+window.peer = null;
+window.myPseudo = null;
+window.isHost = false;
+window.myPlayerIndex = 0;
 
 function initPeerJS() {
     try {
@@ -29,45 +30,45 @@ function initPeerJS() {
         const adjectives = ['Solaire', 'Cosmique', 'Galactique', 'Stellaire', 'Nébuleux', 'Astral', 'Céleste', 'Lunaire', 'Spatial', 'Orbital'];
         const nouns = ['Vaisseau', 'Pilote', 'Guerrier', 'Explorateur', 'Chasseur', 'Navigateur', 'Voyageur', 'Aventurier', 'Découvreur', 'Marin'];
         const randomNum = Math.floor(Math.random() * 1000);
-        myPseudo = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${randomNum}`;
-        console.log('Pseudo généré :', myPseudo);
+        window.myPseudo = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${randomNum}`;
+        console.log('Pseudo généré :', window.myPseudo);
 
         // Initialiser PeerJS avec les options
-        peer = new Peer(myPseudo, peerOptions);
+        window.peer = new Peer(window.myPseudo, peerOptions);
 
-        peer.on('open', (id) => {
+        window.peer.on('open', (id) => {
             console.log('PeerJS ouvert, ID:', id);
             document.getElementById('peerIdSpan').textContent = id;
             document.getElementById('copyIdBtn').style.display = 'inline-block';
             document.getElementById('hostGame').disabled = false;
         });
 
-        peer.on('connection', (conn) => {
+        window.peer.on('connection', (conn) => {
             console.log('Connexion entrante de :', conn.peer);
             setupConnection(conn);
         });
 
-        peer.on('error', (err) => {
+        window.peer.on('error', (err) => {
             console.error('Erreur PeerJS :', err);
             document.getElementById('connectionStatus').textContent = 'Erreur de connexion : ' + err.message;
             
             // Tentative de reconnexion après 5 secondes
             setTimeout(() => {
                 console.log('Tentative de reconnexion...');
-                if (peer && peer.destroyed) {
+                if (window.peer && window.peer.destroyed) {
                     initPeerJS();
                 }
             }, 5000);
         });
 
-        peer.on('disconnected', () => {
+        window.peer.on('disconnected', () => {
             console.log('Déconnecté du serveur PeerJS');
             document.getElementById('connectionStatus').textContent = 'Déconnecté. Tentative de reconnexion...';
             
             // Tentative de reconnexion après 3 secondes
             setTimeout(() => {
                 console.log('Tentative de reconnexion...');
-                if (peer && peer.destroyed) {
+                if (window.peer && window.peer.destroyed) {
                     initPeerJS();
                 }
             }, 3000);
@@ -85,8 +86,5 @@ function initPeerJS() {
     }
 }
 
-// Exporter les variables et fonctions nécessaires
-window.peer = peer;
-window.myPseudo = myPseudo;
-window.isHost = isHost;
-window.myPlayerIndex = myPlayerIndex;
+// Exporter la fonction initPeerJS globalement
+window.initPeerJS = initPeerJS;
