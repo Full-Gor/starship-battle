@@ -1,3 +1,6 @@
+let connection;
+let gameStarted = false;
+
 function setupConnection(conn) {
     connection = conn;
 
@@ -20,13 +23,30 @@ function setupConnection(conn) {
     });
 
     conn.on('data', function(data) {
-        handleNetworkMessage(data);
+        try {
+            handleNetworkMessage(data);
+        } catch (error) {
+            console.error('Erreur lors du traitement du message:', error);
+        }
     });
 
     conn.on('close', function() {
         console.log('Connexion fermée');
         document.getElementById('connectionStatus').textContent = 'Connexion perdue';
         gameStarted = false;
+        
+        // Tentative de reconnexion si on est l'hôte
+        if (isHost) {
+            setTimeout(() => {
+                console.log('Tentative de reconnexion...');
+                if (peer && !peer.destroyed) {
+                    const newConn = peer.connect(conn.peer);
+                    if (newConn) {
+                        setupConnection(newConn);
+                    }
+                }
+            }, 3000);
+        }
     });
 
     conn.on('error', function(err) {
@@ -38,14 +58,28 @@ function setupConnection(conn) {
 function startGameAfterConnection() {
     document.getElementById('connectionStatus').textContent = 'Connexion réussie ! Démarrage du jeu...';
     sendMessage({ type: 'init', pseudo: myPseudo });
+    
+    // Augmenter le délai pour s'assurer que tout est prêt
     setTimeout(() => {
-        if (typeof startGame === 'function') {
-            startGame();
+        if (typeof window.startGame === 'function') {
+            window.startGame();
         } else {
             console.error('❌ Erreur : fonction startGame non disponible');
             document.getElementById('connectionStatus').textContent = 'Erreur : impossible de démarrer le jeu';
         }
-    }, 1000);
+    }, 2000);
+}
+
+function sendMessage(message) {
+    if (connection && connection.open) {
+        try {
+            connection.send(message);
+        } catch (error) {
+            console.error('Erreur lors de l\'envoi du message:', error);
+        }
+    } else {
+        console.warn('Tentative d\'envoi de message sans connexion active');
+    }
 }
 
 document.getElementById('hostGame').addEventListener('click', () => {
@@ -79,7 +113,10 @@ document.getElementById('joinGame').addEventListener('click', () => {
     if (peerID && peerID !== myPseudo) {
         console.log('Tentative de connexion à :', peerID);
         try {
-            const conn = peer.connect(peerID);
+            const conn = peer.connect(peerID, {
+                reliable: true,
+                serialization: 'json'
+            });
             setupConnection(conn);
             isHost = false;
             myPlayerIndex = 1;
