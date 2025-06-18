@@ -1,5 +1,6 @@
 const keys = {};
 const mouse = { x: 0, y: 0, clicking: false };
+let canvas;
 
 window.addEventListener('keydown', (e) => {
     if (e.target && e.target.tagName === 'INPUT') return;
@@ -12,28 +13,34 @@ window.addEventListener('keyup', (e) => {
     keys[e.code] = false;
 });
 
-canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    mouse.x = e.clientX - rect.left;
-    mouse.y = e.clientY - rect.top;
-});
+// Initialisation des événements canvas
+function initCanvasEvents() {
+    canvas = document.getElementById('gameCanvas');
+    if (!canvas) return;
 
-canvas.addEventListener('mousedown', (e) => {
-    if (e.button === 0) {
-        mouse.clicking = true;
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if (e.button === 0) {
+            mouse.clicking = true;
+            e.preventDefault();
+        }
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+        if (e.button === 0) {
+            mouse.clicking = false;
+        }
+    });
+
+    canvas.addEventListener('contextmenu', (e) => {
         e.preventDefault();
-    }
-});
-
-canvas.addEventListener('mouseup', (e) => {
-    if (e.button === 0) {
-        mouse.clicking = false;
-    }
-});
-
-canvas.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-});
+    });
+}
 
 function handleLocalPlayerInput() {
     if (!gameStarted || gameState.paused || gameState.gameOver) return;

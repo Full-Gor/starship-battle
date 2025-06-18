@@ -2,7 +2,11 @@ window.addEventListener('load', () => {
     console.log('🚀 Initialisation du jeu Starship Battle...');
     
     // Charger les images avant de démarrer
-    ImageLoader.loadAll();
+    if (typeof ImageLoader !== 'undefined') {
+        ImageLoader.loadAll();
+    } else {
+        console.error('❌ ImageLoader non disponible');
+    }
     
     if (typeof Peer !== 'undefined') {
         console.log('✅ PeerJS disponible');
