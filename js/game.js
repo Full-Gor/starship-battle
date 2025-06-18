@@ -168,6 +168,14 @@ function handleLocalPlayerInput() {
     const targetX = mouseX;
     const targetY = mouseY;
 
+    // Définir les limites de la zone de jeu pour chaque joueur
+    const midPoint = window.gameCanvas.canvas.height / 2;
+    const minY = myPlayerIndex === 0 ? 0 : midPoint + 10;
+    const maxY = myPlayerIndex === 0 ? midPoint - 10 : window.gameCanvas.canvas.height;
+
+    // Vérifier si la cible est dans la zone autorisée
+    if (targetY < minY || targetY > maxY) return;
+
     // Calculer la direction et la distance
     const dx = targetX - player.x;
     const dy = targetY - player.y;
@@ -181,18 +189,20 @@ function handleLocalPlayerInput() {
         const dirX = dx / distance;
         const dirY = dy / distance;
 
-        // Mettre à jour la position
-        player.x += dirX * speed;
-        player.y += dirY * speed;
+        // Mettre à jour la position avec les limites
+        const newX = Math.max(player.width/2, Math.min(window.gameCanvas.canvas.width - player.width/2, player.x + dirX * speed));
+        const newY = Math.max(minY + player.height/2, Math.min(maxY - player.height/2, player.y + dirY * speed));
+
+        // Appliquer les nouvelles positions
+        player.x = newX;
+        player.y = newY;
 
         // Envoyer la mise à jour de position
-        if (isHost) {
-            sendMessage({
-                type: 'playerUpdate',
-                playerIndex: myPlayerIndex,
-                x: player.x,
-                y: player.y
-            });
-        }
+        sendMessage({
+            type: 'playerUpdate',
+            playerIndex: myPlayerIndex,
+            x: player.x,
+            y: player.y
+        });
     }
 }
