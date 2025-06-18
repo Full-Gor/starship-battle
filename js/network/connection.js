@@ -38,7 +38,14 @@ function setupConnection(conn) {
 function startGameAfterConnection() {
     document.getElementById('connectionStatus').textContent = 'Connexion réussie ! Démarrage du jeu...';
     sendMessage({ type: 'init', pseudo: myPseudo });
-    setTimeout(() => startGame(), 1000);
+    setTimeout(() => {
+        if (typeof startGame === 'function') {
+            startGame();
+        } else {
+            console.error('❌ Erreur : fonction startGame non disponible');
+            document.getElementById('connectionStatus').textContent = 'Erreur : impossible de démarrer le jeu';
+        }
+    }, 1000);
 }
 
 document.getElementById('hostGame').addEventListener('click', () => {

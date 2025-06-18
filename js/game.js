@@ -1,16 +1,22 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+let canvas, ctx;
 
 let lastFrameTime = Date.now();
 let gameInitialized = false;
 
+function initGame() {
+    canvas = document.getElementById('gameCanvas');
+    if (!canvas) return;
+    ctx = canvas.getContext('2d');
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+}
+
 function resizeCanvas() {
+    if (!canvas) return;
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
-
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
 
 function startGame() {
     if (gameStarted) return;
@@ -26,10 +32,12 @@ function startGame() {
     document.getElementById('controlInfo').style.display = 'block';
     document.getElementById('resetButton').style.display = 'block';
 
+    initGame();
     gameStarted = true;
     gameInitialized = false;
     initializeGame();
     updateScoreBoard();
+    initCanvasEvents();
 
     if (isHost) {
         setInterval(() => {
